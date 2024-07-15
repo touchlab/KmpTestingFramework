@@ -4,4 +4,6 @@ plugins {
 
 dependencies {
     compileOnly(libs.kotlin.compiler.embeddable)
+
+    implementation(projects.dsl)
 }
