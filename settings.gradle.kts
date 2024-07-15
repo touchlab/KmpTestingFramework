@@ -23,5 +23,6 @@ dependencyResolutionManagement {
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
+include("compiler-plugin")
 include("dsl")
 include("xctest")
