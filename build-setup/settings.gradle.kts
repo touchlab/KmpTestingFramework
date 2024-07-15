@@ -1,23 +1,19 @@
-@file:Suppress("UnstableApiUsage")
-
 pluginManagement {
     repositories {
         mavenCentral()
         gradlePluginPortal()
     }
-
-    includeBuild("build-setup")
 }
-
-plugins {
-    id("org.gradle.toolchains.foojay-resolver-convention") version "0.5.0"
-}
-
-rootProject.name = "KmpTestingFramework"
 
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
+    }
+
+    versionCatalogs {
+        create("libs") {
+            from(files("../gradle/libs.versions.toml"))
+        }
     }
 }
 
