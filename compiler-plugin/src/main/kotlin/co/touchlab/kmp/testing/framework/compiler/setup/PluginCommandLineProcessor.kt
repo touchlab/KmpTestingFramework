@@ -13,25 +13,23 @@ class PluginCommandLineProcessor : CommandLineProcessor {
     override val pluginId: String = "co.touchlab.kmp.testing.framework"
 
     override val pluginOptions: Collection<AbstractCliOption> = listOf(
-        Options.xcTestGeneratorOutputPath,
+        Options.iOSTestsGeneratorOutputPath,
     )
 
     override fun processOption(option: AbstractCliOption, value: String, configuration: CompilerConfiguration) {
         super.processOption(option, value, configuration)
 
         when (option.optionName) {
-            Options.xcTestGeneratorOutputPath.optionName -> {
-                configuration.xcTestGeneratorOutputPath = Paths.get(value)
-            }
+            Options.iOSTestsGeneratorOutputPath.optionName -> configuration.iOSTestsGeneratorOutputPath = Paths.get(value)
         }
     }
 
     object Options {
 
-        val xcTestGeneratorOutputPath = CliOption(
-            optionName = "xcTestGeneratorOutputPath",
+        val iOSTestsGeneratorOutputPath = CliOption(
+            optionName = "iOSTestGeneratorOutputPath",
             valueDescription = "<path>",
-            description = "Path to the output directory for the XCTest generator.",
+            description = "Path to the output directory for the iOS tests generator.",
             required = true,
             allowMultipleOccurrences = false,
         )

@@ -6,9 +6,9 @@ import java.nio.file.Path
 
 object PluginConfigurationKeys {
 
-    object XcTestGeneratorOutputPath : CompilerConfigurationKey<Path>("xcTestGeneratorOutputPath")
+    object IOSTestsGeneratorOutputPath : CompilerConfigurationKey<Path>("iOSTestsGeneratorOutputPath")
 }
 
-var CompilerConfiguration.xcTestGeneratorOutputPath: Path
-    get() = getNotNull(PluginConfigurationKeys.XcTestGeneratorOutputPath)
-    set(value) = put(PluginConfigurationKeys.XcTestGeneratorOutputPath, value)
+var CompilerConfiguration.iOSTestsGeneratorOutputPath: Path
+    get() = getNotNull(PluginConfigurationKeys.IOSTestsGeneratorOutputPath)
+    set(value) = put(PluginConfigurationKeys.IOSTestsGeneratorOutputPath, value)

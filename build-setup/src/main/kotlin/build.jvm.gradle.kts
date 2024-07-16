@@ -6,4 +6,8 @@ plugins {
 
 kotlin {
     jvmToolchain(19)
+
+    sourceSets.main {
+        languageSettings.enableLanguageFeature("ContextReceivers")
+    }
 }
