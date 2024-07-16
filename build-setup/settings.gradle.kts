@@ -17,4 +17,6 @@ dependencyResolutionManagement {
     }
 }
 
+rootProject.name = "BuildSetup"
+
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
