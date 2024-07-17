@@ -22,10 +22,7 @@ class IOSTestsEntryPointGenerator(
 
     context(SmartStringBuilder)
     override fun TestsSuiteInstanceDescriptor.appendCode() {
-        +"""
-            // Generated file
-
-            import XCTest
+        +"""import XCTest
             import KotlinAcceptanceTests
 
             class $name : XCTestCase {
@@ -87,7 +84,7 @@ class IOSTestsEntryPointGenerator(
     context(SmartStringBuilder)
     private fun ContractDescriptor.Parametrized.appendTest() {
         dataProvider.entries.forEach { entry ->
-            val propertyAccess = (dataProvider.partiallyQualifiedName + ".companion." + entry.propertyName).toValidSwiftIdentifier()
+            val propertyAccess = dataProvider.partiallyQualifiedName + ".companion." + entry.propertyName.toValidSwiftIdentifier()
 
             appendRawTest(contractFunctionName, entry.testName, propertyAccess)
         }
