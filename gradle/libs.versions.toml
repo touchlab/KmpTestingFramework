@@ -1,5 +1,6 @@
 [versions]
 kotlin = "2.0.0"
+jdk = "8"
 
 [plugins]
 
