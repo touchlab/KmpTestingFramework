@@ -2,19 +2,26 @@
 
 package co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor
 
+import co.touchlab.kmp.testing.framework.compiler.util.getRequiredImport
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
 import org.jetbrains.kotlin.ir.util.dumpKotlinLike
+import org.jetbrains.kotlin.ir.util.packageFqName
 import org.jetbrains.kotlin.ir.util.parentClassOrNull
 
 data class ContractsDescriptor(
     val suiteName: String,
     val contractsClassName: String,
+    val packageName: String,
     val tests: List<ContractDescriptor>,
 ) {
 
     val contractsClassPartiallyQualifiedName: String = "$suiteName.$contractsClassName"
+
+    fun getRequiredImports(fromPackage: String): Set<String> =
+        tests.flatMap { it.getRequiredImports(fromPackage) }.toSet() +
+                getRequiredImport(fromPackage, packageName, suiteName)
 
     companion object {
 
@@ -25,6 +32,7 @@ data class ContractsDescriptor(
             return ContractsDescriptor(
                 suiteName = parentClass.name.identifier,
                 contractsClassName = contractClass.name.identifier,
+                packageName = parentClass.packageFqName?.asString() ?: "",
                 tests = contractClass.declarations
                     .filterIsInstance<IrSimpleFunction>()
                     .filter { !it.isFakeOverride }

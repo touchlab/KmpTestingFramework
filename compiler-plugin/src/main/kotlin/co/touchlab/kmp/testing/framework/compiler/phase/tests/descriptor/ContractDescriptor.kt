@@ -2,6 +2,7 @@
 
 package co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor
 
+import co.touchlab.kmp.testing.framework.compiler.util.getRequiredImport
 import co.touchlab.kmp.testing.framework.compiler.util.partiallyQualifiedName
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrProperty
@@ -12,27 +13,35 @@ import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.dumpKotlinLike
 import org.jetbrains.kotlin.ir.util.kotlinFqName
+import org.jetbrains.kotlin.ir.util.packageFqName
 
 sealed interface ContractDescriptor {
 
     val contractFunctionName: String
 
+    fun getRequiredImports(fromPackage: String): Set<String>
+
     data class Simple(
         override val contractFunctionName: String,
         val testName: String,
-    ) : ContractDescriptor
+    ) : ContractDescriptor {
+
+        override fun getRequiredImports(fromPackage: String): Set<String> = emptySet()
+    }
 
     data class Parametrized(
         override val contractFunctionName: String,
         val dataProvider: DataProvider,
     ) : ContractDescriptor {
 
+        override fun getRequiredImports(fromPackage: String): Set<String> =
+            getRequiredImport(fromPackage, dataProvider.packageName, dataProvider.partiallyQualifiedName.substringBefore('.'))
+
         data class DataProvider(
+            val packageName: String,
             val partiallyQualifiedName: String,
             val entries: List<Entry>,
         ) {
-
-            val simpleName: String = partiallyQualifiedName.substringAfterLast(".")
 
             data class Entry(
                 val propertyName: String,
@@ -80,6 +89,7 @@ sealed interface ContractDescriptor {
 
             return Parametrized.DataProvider(
                 partiallyQualifiedName = dataClass.kotlinFqName.partiallyQualifiedName,
+                packageName = dataClass.packageFqName?.asString() ?: "",
                 entries = createDataProviderEntries(dataClass, contractFunction),
             )
         }
@@ -97,7 +107,7 @@ sealed interface ContractDescriptor {
                 .map { property ->
                     Parametrized.DataProvider.Entry(
                         propertyName = property.name.identifier,
-                        testName = contractFunction.name.identifier + "__" + property.name.identifier,
+                        testName = contractFunction.name.identifier + " - " + property.name.identifier,
                     )
                 }
         }

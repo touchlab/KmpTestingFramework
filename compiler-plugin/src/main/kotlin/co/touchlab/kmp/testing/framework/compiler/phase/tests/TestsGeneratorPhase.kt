@@ -1,7 +1,9 @@
 package co.touchlab.kmp.testing.framework.compiler.phase.tests
 
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.generator.IOSTestsEntryPointGenerator
+import co.touchlab.kmp.testing.framework.compiler.phase.tests.generator.UnitTestsEntryPointGenerator
 import co.touchlab.kmp.testing.framework.compiler.setup.iOSTestsGeneratorOutputPath
+import co.touchlab.kmp.testing.framework.compiler.setup.unitTestsGeneratorOutputPath
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 
@@ -12,6 +14,7 @@ class TestsGeneratorPhase(
     private val testsSuiteProvider = TestsSuiteProvider()
 
     private val generators = listOf(
+        UnitTestsEntryPointGenerator(configuration.unitTestsGeneratorOutputPath),
         IOSTestsEntryPointGenerator(configuration.iOSTestsGeneratorOutputPath),
     )
 

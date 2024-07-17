@@ -7,6 +7,7 @@ import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.DriverD
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.TestsSuiteDescriptor
 import co.touchlab.kmp.testing.framework.dsl.ContractsDsl
 import co.touchlab.kmp.testing.framework.dsl.driver.IOSDriver
+import co.touchlab.kmp.testing.framework.dsl.driver.UnitDriver
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
@@ -36,6 +37,7 @@ class TestsSuiteProvider {
             TestsSuiteDescriptor(
                 contracts = ContractsDescriptor.from(contracts),
                 iOSDrivers = visitor.discoveredIOSDrivers.filterImplementations(baseDriver).map { DriverDescriptor.from(it) },
+                unitDrivers = visitor.discoveredUnitDrivers.filterImplementations(baseDriver).map { DriverDescriptor.from(it) },
             )
         }
     }
@@ -62,10 +64,12 @@ class TestsSuiteProvider {
         private val contractsDslFqName = FqName(ContractsDsl::class.qualifiedName!!)
 
         private val iOSDriverAnnotationFqName = FqName(IOSDriver::class.qualifiedName!!)
+        private val unitDriverAnnotationFqName = FqName(UnitDriver::class.qualifiedName!!)
 
         val discoveredContracts: MutableList<IrClass> = mutableListOf()
 
         val discoveredIOSDrivers: MutableList<IrClass> = mutableListOf()
+        val discoveredUnitDrivers: MutableList<IrClass> = mutableListOf()
 
         override fun visitElement(element: IrElement) {
             element.acceptChildrenVoid(this)
@@ -84,6 +88,10 @@ class TestsSuiteProvider {
             if (declaration.isIOSDriver()) {
                 discoveredIOSDrivers.add(declaration)
             }
+
+            if (declaration.isUnitDriver()) {
+                discoveredUnitDrivers.add(declaration)
+            }
         }
 
         private fun IrClass.isContract(): Boolean =
@@ -91,6 +99,9 @@ class TestsSuiteProvider {
 
         private fun IrClass.isIOSDriver(): Boolean =
             this.hasAnnotation(iOSDriverAnnotationFqName)
+
+        private fun IrClass.isUnitDriver(): Boolean =
+            this.hasAnnotation(unitDriverAnnotationFqName)
 
         private fun IrClass.hasAnnotation(fqName: FqName): Boolean =
             this.annotations.any { it.type.classFqName == fqName }

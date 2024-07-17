@@ -5,27 +5,34 @@ import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.DriverD
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.TestsSuiteDescriptor
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.TestsSuiteInstanceDescriptor
 import co.touchlab.kmp.testing.framework.compiler.util.SmartStringBuilder
-import co.touchlab.kmp.testing.framework.compiler.util.toValidSwiftIdentifier
+import co.touchlab.kmp.testing.framework.compiler.util.escapedKotlinIdentifierIfNeeded
+import co.touchlab.kmp.testing.framework.compiler.util.getFqName
 import java.nio.file.Path
 
-class IOSTestsEntryPointGenerator(
+class UnitTestsEntryPointGenerator(
     outputDirectory: Path,
 ) : BaseTestsEntryPointGenerator(outputDirectory) {
 
-    override val instanceNamePrefix: String = "IOS"
+    override val instanceNamePrefix: String = "Unit"
 
     override val TestsSuiteDescriptor.typedDrivers: List<DriverDescriptor>
-        get() = iOSDrivers
+        get() = unitDrivers
 
     override val TestsSuiteInstanceDescriptor.generatedFileName: String
-        get() = "$name.swift"
+        get() = "$name.kt"
 
     context(SmartStringBuilder)
     override fun TestsSuiteInstanceDescriptor.appendCode() {
-        +"""import XCTest
-            import KotlinAcceptanceTests
+        val packageName = getFqName(contracts.packageName, "generated")
 
-            class $name : XCTestCase {
+        +"package $packageName"
+        +""
+        getRequiredImports(packageName).forEach {
+            +"import $it"
+        }
+        +"import kotlin.test.Test"
+        +""
+        +"""class $name {
             
             """.trimIndent()
 
@@ -41,22 +48,14 @@ class IOSTestsEntryPointGenerator(
     context(SmartStringBuilder)
     private fun TestsSuiteInstanceDescriptor.appendHelperMethods() {
         +"""    
-            override func setUpWithError() throws {
-                continueAfterFailure = false
-            }
+            private fun runTest(action: ${contracts.contractsClassPartiallyQualifiedName}.() -> Unit) {
+                val driver = ${driver.partiallyQualifiedName}()
+            
+                val suite = ${contracts.suiteName}(driver)
         
-            private func runTest(action: (${contracts.contractsClassPartiallyQualifiedName}) throws -> Void) rethrows {
-                let app = XCUIApplication()
-                        
-                app.launch()
-                        
-                let driver = ${driver.partiallyQualifiedName}(app: app)
-                        
-                let suite = ${contracts.suiteName}(driver: driver)
-                        
-                let contracts = ${contracts.contractsClassPartiallyQualifiedName}(suite)
-                        
-                try action(contracts)
+                val contracts = suite.${contracts.contractsClassName}()
+        
+                contracts.action()
             }
             """.trimIndent()
     }
@@ -84,18 +83,17 @@ class IOSTestsEntryPointGenerator(
     context(SmartStringBuilder)
     private fun ContractDescriptor.Parametrized.appendTest() {
         dataProvider.entries.forEach { entry ->
-            val propertyAccess = dataProvider.partiallyQualifiedName + ".companion." + entry.propertyName.toValidSwiftIdentifier()
+            val dataAccess = dataProvider.partiallyQualifiedName + "." + entry.propertyName.escapedKotlinIdentifierIfNeeded() + "."
 
-            appendRawTest(contractFunctionName, entry.testName, propertyAccess)
+            appendRawTest(contractFunctionName, entry.testName, dataAccess)
         }
     }
 
     private fun SmartStringBuilder.appendRawTest(contractFunctionName: String, testName: String, dataParameter: String) {
         +"""
-        func test__${testName.toValidSwiftIdentifier()}() throws {
-            try runTest {
-                try $0.${contractFunctionName.toValidSwiftIdentifier()}($dataParameter)
-            }
+        @Test
+        fun ${testName.escapedKotlinIdentifierIfNeeded()}() = runTest {
+            $dataParameter${contractFunctionName.escapedKotlinIdentifierIfNeeded()}()
         }
         
         """.trimIndent()

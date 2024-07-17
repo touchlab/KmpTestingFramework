@@ -14,6 +14,7 @@ class PluginCommandLineProcessor : CommandLineProcessor {
 
     override val pluginOptions: Collection<AbstractCliOption> = listOf(
         Options.iOSTestsGeneratorOutputPath,
+        Options.unitTestsGeneratorOutputPath,
     )
 
     override fun processOption(option: AbstractCliOption, value: String, configuration: CompilerConfiguration) {
@@ -21,15 +22,24 @@ class PluginCommandLineProcessor : CommandLineProcessor {
 
         when (option.optionName) {
             Options.iOSTestsGeneratorOutputPath.optionName -> configuration.iOSTestsGeneratorOutputPath = Paths.get(value)
+            Options.unitTestsGeneratorOutputPath.optionName -> configuration.unitTestsGeneratorOutputPath = Paths.get(value)
         }
     }
 
     object Options {
 
         val iOSTestsGeneratorOutputPath = CliOption(
-            optionName = "iOSTestGeneratorOutputPath",
+            optionName = "iOSTestsGeneratorOutputPath",
             valueDescription = "<path>",
             description = "Path to the output directory for the iOS tests generator.",
+            required = true,
+            allowMultipleOccurrences = false,
+        )
+
+        val unitTestsGeneratorOutputPath = CliOption(
+            optionName = "unitTestsGeneratorOutputPath",
+            valueDescription = "<path>",
+            description = "Path to the output directory for the unit tests generator.",
             required = true,
             allowMultipleOccurrences = false,
         )
