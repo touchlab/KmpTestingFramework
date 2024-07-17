@@ -22,31 +22,25 @@ class UnitTestsEntryPointGenerator(
         get() = "$name.kt"
 
     context(SmartStringBuilder)
-    override fun TestsSuiteInstanceDescriptor.appendCode() {
+    override fun TestsSuiteInstanceDescriptor.appendClassHeader() {
         val packageName = getFqName(contracts.packageName, "generated")
 
         +"package $packageName"
         +""
+
         getRequiredImports(packageName).forEach {
             +"import $it"
         }
         +"import kotlin.test.Test"
         +""
+
         +"""class $name {
             
             """.trimIndent()
-
-        indented {
-            appendTests()
-
-            appendHelperMethods()
-        }
-
-        +"}"
     }
 
     context(SmartStringBuilder)
-    private fun TestsSuiteInstanceDescriptor.appendHelperMethods() {
+    override fun TestsSuiteInstanceDescriptor.appendHelperMethods() {
         +"""    
             private fun runTest(action: ${contracts.contractsClassPartiallyQualifiedName}.() -> Unit) {
                 val driver = ${driver.partiallyQualifiedName}()
@@ -61,27 +55,12 @@ class UnitTestsEntryPointGenerator(
     }
 
     context(SmartStringBuilder)
-    private fun TestsSuiteInstanceDescriptor.appendTests() {
-        contracts.tests.forEach {
-            it.appendTest()
-        }
-    }
-
-    context(SmartStringBuilder)
-    private fun ContractDescriptor.appendTest() {
-        when (this) {
-            is ContractDescriptor.Simple -> appendTest()
-            is ContractDescriptor.Parametrized -> appendTest()
-        }
-    }
-
-    context(SmartStringBuilder)
-    private fun ContractDescriptor.Simple.appendTest() {
+    override fun ContractDescriptor.Simple.appendTest() {
         appendRawTest(contractFunctionName, testName, "")
     }
 
     context(SmartStringBuilder)
-    private fun ContractDescriptor.Parametrized.appendTest() {
+    override fun ContractDescriptor.Parametrized.appendTest() {
         dataProvider.entries.forEach { entry ->
             val dataAccess = dataProvider.partiallyQualifiedName + "." + entry.propertyName.escapedKotlinIdentifierIfNeeded() + "."
 

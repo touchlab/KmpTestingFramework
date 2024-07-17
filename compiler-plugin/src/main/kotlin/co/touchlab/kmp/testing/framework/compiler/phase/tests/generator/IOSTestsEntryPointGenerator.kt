@@ -21,25 +21,17 @@ class IOSTestsEntryPointGenerator(
         get() = "$name.swift"
 
     context(SmartStringBuilder)
-    override fun TestsSuiteInstanceDescriptor.appendCode() {
+    override fun TestsSuiteInstanceDescriptor.appendClassHeader() {
         +"""import XCTest
             import KotlinAcceptanceTests
 
             class $name : XCTestCase {
             
             """.trimIndent()
-
-        indented {
-            appendTests()
-
-            appendHelperMethods()
-        }
-
-        +"}"
     }
 
     context(SmartStringBuilder)
-    private fun TestsSuiteInstanceDescriptor.appendHelperMethods() {
+    override fun TestsSuiteInstanceDescriptor.appendHelperMethods() {
         +"""    
             override func setUpWithError() throws {
                 continueAfterFailure = false
@@ -62,27 +54,12 @@ class IOSTestsEntryPointGenerator(
     }
 
     context(SmartStringBuilder)
-    private fun TestsSuiteInstanceDescriptor.appendTests() {
-        contracts.tests.forEach {
-            it.appendTest()
-        }
-    }
-
-    context(SmartStringBuilder)
-    private fun ContractDescriptor.appendTest() {
-        when (this) {
-            is ContractDescriptor.Simple -> appendTest()
-            is ContractDescriptor.Parametrized -> appendTest()
-        }
-    }
-
-    context(SmartStringBuilder)
-    private fun ContractDescriptor.Simple.appendTest() {
+    override fun ContractDescriptor.Simple.appendTest() {
         appendRawTest(contractFunctionName, testName, "")
     }
 
     context(SmartStringBuilder)
-    private fun ContractDescriptor.Parametrized.appendTest() {
+    override fun ContractDescriptor.Parametrized.appendTest() {
         dataProvider.entries.forEach { entry ->
             val propertyAccess = dataProvider.partiallyQualifiedName + ".companion." + entry.propertyName.toValidSwiftIdentifier()
 

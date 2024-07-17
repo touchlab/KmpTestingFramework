@@ -1,5 +1,6 @@
 package co.touchlab.kmp.testing.framework.compiler.phase.tests.generator
 
+import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.ContractDescriptor
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.DriverDescriptor
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.TestsSuiteDescriptor
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.TestsSuiteInstanceDescriptor
@@ -40,6 +41,34 @@ abstract class BaseTestsEntryPointGenerator(
         outputFile.writeText(fileContent)
     }
 
+    context(SmartStringBuilder)
+    private fun TestsSuiteInstanceDescriptor.appendCode() {
+        appendClassHeader()
+
+        indented {
+            appendTests()
+
+            appendHelperMethods()
+        }
+
+        +"}"
+    }
+
+    context(SmartStringBuilder)
+    protected fun TestsSuiteInstanceDescriptor.appendTests() {
+        contracts.tests.forEach {
+            it.appendTest()
+        }
+    }
+
+    context(SmartStringBuilder)
+    private fun ContractDescriptor.appendTest() {
+        when (this) {
+            is ContractDescriptor.Simple -> appendTest()
+            is ContractDescriptor.Parametrized -> appendTest()
+        }
+    }
+
     protected val TestsSuiteInstanceDescriptor.name: String
         get() = if (suiteHasMultipleDrivers) {
             instanceNamePrefix + contracts.suiteName + "_" + driver.partiallyQualifiedName
@@ -54,5 +83,14 @@ abstract class BaseTestsEntryPointGenerator(
     protected abstract val TestsSuiteInstanceDescriptor.generatedFileName: String
 
     context(SmartStringBuilder)
-    protected abstract fun TestsSuiteInstanceDescriptor.appendCode()
+    protected abstract fun TestsSuiteInstanceDescriptor.appendClassHeader()
+
+    context(SmartStringBuilder)
+    protected abstract fun TestsSuiteInstanceDescriptor.appendHelperMethods()
+
+    context(SmartStringBuilder)
+    protected abstract fun ContractDescriptor.Simple.appendTest()
+
+    context(SmartStringBuilder)
+    protected abstract fun ContractDescriptor.Parametrized.appendTest()
 }
