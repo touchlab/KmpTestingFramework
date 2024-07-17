@@ -6,6 +6,7 @@ import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.Contrac
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.DriverDescriptor
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.TestsSuiteDescriptor
 import co.touchlab.kmp.testing.framework.dsl.ContractsDsl
+import co.touchlab.kmp.testing.framework.dsl.driver.AndroidDriver
 import co.touchlab.kmp.testing.framework.dsl.driver.IOSDriver
 import co.touchlab.kmp.testing.framework.dsl.driver.UnitDriver
 import org.jetbrains.kotlin.ir.IrElement
@@ -36,6 +37,7 @@ class TestsSuiteProvider {
 
             TestsSuiteDescriptor(
                 contracts = ContractsDescriptor.from(contracts),
+                androidDrivers = visitor.discoveredAndroidDrivers.filterImplementations(baseDriver).map { DriverDescriptor.from(it) },
                 iOSDrivers = visitor.discoveredIOSDrivers.filterImplementations(baseDriver).map { DriverDescriptor.from(it) },
                 unitDrivers = visitor.discoveredUnitDrivers.filterImplementations(baseDriver).map { DriverDescriptor.from(it) },
             )
@@ -63,11 +65,13 @@ class TestsSuiteProvider {
 
         private val contractsDslFqName = FqName(ContractsDsl::class.qualifiedName!!)
 
+        private val androidDriverAnnotationFqName = FqName(AndroidDriver::class.qualifiedName!!)
         private val iOSDriverAnnotationFqName = FqName(IOSDriver::class.qualifiedName!!)
         private val unitDriverAnnotationFqName = FqName(UnitDriver::class.qualifiedName!!)
 
         val discoveredContracts: MutableList<IrClass> = mutableListOf()
 
+        val discoveredAndroidDrivers: MutableList<IrClass> = mutableListOf()
         val discoveredIOSDrivers: MutableList<IrClass> = mutableListOf()
         val discoveredUnitDrivers: MutableList<IrClass> = mutableListOf()
 
@@ -85,6 +89,10 @@ class TestsSuiteProvider {
                 discoveredContracts.add(declaration)
             }
 
+            if (declaration.isAndroidDriver()) {
+                discoveredAndroidDrivers.add(declaration)
+            }
+
             if (declaration.isIOSDriver()) {
                 discoveredIOSDrivers.add(declaration)
             }
@@ -96,6 +104,9 @@ class TestsSuiteProvider {
 
         private fun IrClass.isContract(): Boolean =
             this.superTypes.any { it.classFqName == contractsDslFqName }
+
+        private fun IrClass.isAndroidDriver(): Boolean =
+            this.hasAnnotation(androidDriverAnnotationFqName)
 
         private fun IrClass.isIOSDriver(): Boolean =
             this.hasAnnotation(iOSDriverAnnotationFqName)

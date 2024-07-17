@@ -7,16 +7,18 @@ import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.TestsSu
 import co.touchlab.kmp.testing.framework.compiler.util.SmartStringBuilder
 import co.touchlab.kmp.testing.framework.compiler.util.escapedKotlinIdentifierIfNeeded
 import co.touchlab.kmp.testing.framework.compiler.util.getFqName
+import co.touchlab.kmp.testing.framework.compiler.util.toValidSwiftIdentifier
 import java.nio.file.Path
 
-class UnitTestsEntryPointGenerator(
+class AndroidTestsEntryPointGenerator(
     outputDirectory: Path,
+    private val androidAppEntryPoint: String,
 ) : BaseTestsEntryPointGenerator(outputDirectory) {
 
-    override val instanceNamePrefix: String = "Unit"
+    override val instanceNamePrefix: String = "Android"
 
     override val TestsSuiteDescriptor.typedDrivers: List<DriverDescriptor>
-        get() = unitDrivers
+        get() = androidDrivers
 
     override val TestsSuiteInstanceDescriptor.generatedFileName: String
         get() = "$name.kt"
@@ -25,14 +27,23 @@ class UnitTestsEntryPointGenerator(
     override fun TestsSuiteInstanceDescriptor.appendClassHeader() {
         val packageName = getFqName(contracts.packageName, "generated")
 
-        +"package $packageName"
-        +""
+        +"""
+            @file:Suppress("IllegalIdentifier")
+            
+            package $packageName
+            
+        """.trimIndent()
 
         getRequiredImports(packageName).forEach {
             +"import $it"
         }
-        +"import kotlin.test.Test"
-        +""
+        +"""
+            import $androidAppEntryPoint
+            import androidx.compose.ui.test.junit4.createComposeRule
+            import org.junit.Rule
+            import org.junit.Test
+            
+        """.trimIndent()
 
         +"""class $name {
             
@@ -41,9 +52,16 @@ class UnitTestsEntryPointGenerator(
 
     context(SmartStringBuilder)
     override fun TestsSuiteInstanceDescriptor.appendHelperMethods() {
-        +"""    
+        +"""
+            @get:Rule
+            val composeTestRule = createComposeRule()
+
             private inline fun runTest(action: ${contracts.contractsClassPartiallyQualifiedName}.() -> Unit) {
-                val driver = ${driver.partiallyQualifiedName}()
+               composeTestRule.setContent {
+                    ${androidAppEntryPoint.substringAfterLast(".")}()
+                }
+                
+                val driver = ${driver.partiallyQualifiedName}(composeTestRule)
             
                 val suite = ${contracts.suiteName}(driver)
         
@@ -71,7 +89,7 @@ class UnitTestsEntryPointGenerator(
     private fun SmartStringBuilder.appendRawTest(contractFunctionName: String, testName: String, dataParameter: String) {
         +"""
         @Test
-        fun ${testName.escapedKotlinIdentifierIfNeeded()}() = runTest {
+        fun ${testName.toValidSwiftIdentifier()}() = runTest {
             $dataParameter${contractFunctionName.escapedKotlinIdentifierIfNeeded()}()
         }
         
