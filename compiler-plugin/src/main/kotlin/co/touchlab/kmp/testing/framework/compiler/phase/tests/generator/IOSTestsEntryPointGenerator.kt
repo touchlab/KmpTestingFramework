@@ -22,7 +22,8 @@ class IOSTestsEntryPointGenerator(
 
     context(SmartStringBuilder)
     override fun TestsSuiteInstanceDescriptor.appendClassHeader() {
-        +"""import XCTest
+        +"""
+            import XCTest
             import KotlinAcceptanceTests
 
             class $name : XCTestCase {
