@@ -4,6 +4,7 @@ import co.touchlab.kmp.testing.framework.compiler.phase.tests.generator.AndroidT
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.generator.IOSTestsEntryPointGenerator
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.generator.UnitTestsEntryPointGenerator
 import co.touchlab.kmp.testing.framework.compiler.setup.androidAppEntryPoint
+import co.touchlab.kmp.testing.framework.compiler.setup.androidAppEntryPointType
 import co.touchlab.kmp.testing.framework.compiler.setup.androidTestsGeneratorOutputPath
 import co.touchlab.kmp.testing.framework.compiler.setup.iOSTestsGeneratorOutputPath
 import co.touchlab.kmp.testing.framework.compiler.setup.unitTestsGeneratorOutputPath
@@ -18,7 +19,7 @@ class TestsGeneratorPhase(
 
     private val generators = listOf(
         UnitTestsEntryPointGenerator(configuration.unitTestsGeneratorOutputPath),
-        AndroidTestsEntryPointGenerator(configuration.androidTestsGeneratorOutputPath, configuration.androidAppEntryPoint),
+        AndroidTestsEntryPointGenerator(configuration.androidTestsGeneratorOutputPath, configuration.androidAppEntryPoint, configuration.androidAppEntryPointType),
         IOSTestsEntryPointGenerator(configuration.iOSTestsGeneratorOutputPath),
     )
 

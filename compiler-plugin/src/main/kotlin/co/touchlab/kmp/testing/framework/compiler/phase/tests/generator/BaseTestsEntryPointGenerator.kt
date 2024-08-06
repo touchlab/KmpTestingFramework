@@ -5,6 +5,7 @@ import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.DriverD
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.TestsSuiteDescriptor
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.TestsSuiteInstanceDescriptor
 import co.touchlab.kmp.testing.framework.compiler.util.SmartStringBuilder
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.writeText
 
@@ -37,6 +38,8 @@ abstract class BaseTestsEntryPointGenerator(
 
             testsSuiteInstanceDescriptor.appendCode()
         }
+
+        Files.createDirectories(outputFile.parent)
 
         outputFile.writeText(fileContent)
     }

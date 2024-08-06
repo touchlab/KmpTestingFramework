@@ -4,6 +4,7 @@ import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.Contrac
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.DriverDescriptor
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.TestsSuiteDescriptor
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.TestsSuiteInstanceDescriptor
+import co.touchlab.kmp.testing.framework.compiler.setup.AndroidInitializationStrategy
 import co.touchlab.kmp.testing.framework.compiler.util.SmartStringBuilder
 import co.touchlab.kmp.testing.framework.compiler.util.escapedKotlinIdentifierIfNeeded
 import co.touchlab.kmp.testing.framework.compiler.util.getFqName
@@ -13,6 +14,7 @@ import java.nio.file.Path
 class AndroidTestsEntryPointGenerator(
     outputDirectory: Path,
     private val androidAppEntryPoint: String,
+    private val androidInitializationStrategy: AndroidInitializationStrategy,
 ) : BaseTestsEntryPointGenerator(outputDirectory) {
 
     override val instanceNamePrefix: String = "Android"
@@ -40,6 +42,7 @@ class AndroidTestsEntryPointGenerator(
         +"""
             import $androidAppEntryPoint
             import androidx.compose.ui.test.junit4.createComposeRule
+            import androidx.compose.ui.test.junit4.createAndroidComposeRule
             import org.junit.Rule
             import org.junit.Test
             
@@ -54,12 +57,10 @@ class AndroidTestsEntryPointGenerator(
     override fun TestsSuiteInstanceDescriptor.appendHelperMethods() {
         +"""
             @get:Rule
-            val composeTestRule = createComposeRule()
+            val composeTestRule = ${buildComposeTestRule()}
 
             private inline fun runTest(action: ${contracts.contractsClassPartiallyQualifiedName}.() -> Unit) {
-               composeTestRule.setContent {
-                    ${androidAppEntryPoint.substringAfterLast(".")}()
-                }
+                ${content()}
                 
                 val driver = ${driver.partiallyQualifiedName}(composeTestRule)
             
@@ -95,4 +96,22 @@ class AndroidTestsEntryPointGenerator(
         
         """.trimIndent()
     }
+
+    private fun buildComposeTestRule(): String =
+        when(androidInitializationStrategy) {
+            AndroidInitializationStrategy.COMPOSABLE -> "createComposeRule()"
+            AndroidInitializationStrategy.ACTIVITY -> "createAndroidComposeRule<${entryPointSimpleName()}>()"
+        }
+
+    private fun entryPointSimpleName(): String = androidAppEntryPoint.substringAfterLast(".")
+
+    private fun content(): String =
+        when(androidInitializationStrategy) {
+            AndroidInitializationStrategy.COMPOSABLE -> """
+                composeTestRule.setContent {
+                    ${entryPointSimpleName()}()
+                }
+            """.trimIndent()
+            AndroidInitializationStrategy.ACTIVITY -> ""
+        }
 }
