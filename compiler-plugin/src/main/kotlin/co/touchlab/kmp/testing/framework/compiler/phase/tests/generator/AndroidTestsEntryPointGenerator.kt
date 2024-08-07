@@ -42,7 +42,7 @@ class AndroidTestsEntryPointGenerator(
         +"""
             import $androidAppEntryPoint
             import androidx.compose.ui.test.junit4.createComposeRule
-            import androidx.compose.ui.test.junit4.createAndroidComposeRule
+            import androidx.compose.ui.test.junit4.createEmptyComposeRule
             import org.junit.Rule
             import org.junit.Test
             
@@ -62,7 +62,7 @@ class AndroidTestsEntryPointGenerator(
             private inline fun runTest(action: ${contracts.contractsClassPartiallyQualifiedName}.() -> Unit) {
                 ${content()}
                 
-                val driver = ${driver.partiallyQualifiedName}(composeTestRule)
+                val driver = ${driverInstantiation()}
             
                 val suite = ${contracts.suiteName}(driver)
         
@@ -100,7 +100,13 @@ class AndroidTestsEntryPointGenerator(
     private fun buildComposeTestRule(): String =
         when(androidInitializationStrategy) {
             AndroidInitializationStrategy.COMPOSABLE -> "createComposeRule()"
-            AndroidInitializationStrategy.ACTIVITY -> "createAndroidComposeRule<${entryPointSimpleName()}>()"
+            AndroidInitializationStrategy.ACTIVITY -> "createEmptyComposeRule()"
+        }
+
+    private fun TestsSuiteInstanceDescriptor.driverInstantiation(): String =
+        when(androidInitializationStrategy) {
+            AndroidInitializationStrategy.COMPOSABLE -> "${driver.partiallyQualifiedName}(composeTestRule)"
+            AndroidInitializationStrategy.ACTIVITY -> "${driver.partiallyQualifiedName}(composeTestRule, ${entryPointSimpleName()}::class.java)"
         }
 
     private fun entryPointSimpleName(): String = androidAppEntryPoint.substringAfterLast(".")
