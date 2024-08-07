@@ -41,8 +41,6 @@ class IOSTestsEntryPointGenerator(
             private func runTest(action: (${contracts.contractsClassPartiallyQualifiedName}) throws -> Void) rethrows {
                 let app = XCUIApplication()
                         
-                app.launch()
-                        
                 let driver = ${driver.partiallyQualifiedName}(app: app)
                         
                 let suite = ${contracts.suiteName}(driver: driver)
@@ -50,6 +48,8 @@ class IOSTestsEntryPointGenerator(
                 let contracts = ${contracts.contractsClassPartiallyQualifiedName}(suite)
                         
                 try action(contracts)
+                
+                app.terminate()
             }
             """.trimIndent()
     }
