@@ -49,6 +49,8 @@ class IOSTestsEntryPointGenerator(
                         
                 try action(contracts)
                 
+                ${if(driver.hasOnFinally) "driver.onFinally()" else ""}
+                
                 app.terminate()
             }
             """.trimIndent()
