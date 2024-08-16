@@ -17,6 +17,7 @@ class PluginCommandLineProcessor : CommandLineProcessor {
         Options.iOSTestsGeneratorOutputPath,
         Options.unitTestsGeneratorOutputPath,
         Options.androidAppEntryPoint,
+        Options.androidAppEntryPointType,
     )
 
     override fun processOption(option: AbstractCliOption, value: String, configuration: CompilerConfiguration) {
@@ -27,6 +28,7 @@ class PluginCommandLineProcessor : CommandLineProcessor {
             Options.iOSTestsGeneratorOutputPath.optionName -> configuration.iOSTestsGeneratorOutputPath = Paths.get(value)
             Options.unitTestsGeneratorOutputPath.optionName -> configuration.unitTestsGeneratorOutputPath = Paths.get(value)
             Options.androidAppEntryPoint.optionName -> configuration.androidAppEntryPoint = value
+            Options.androidAppEntryPointType.optionName -> configuration.androidAppEntryPointType = AndroidInitializationStrategy.byName(value)
         }
     }
 
@@ -61,6 +63,13 @@ class PluginCommandLineProcessor : CommandLineProcessor {
             valueDescription = "function FQ name",
             description = "FQ name of the Composable function which the UI tests should call to setup the app.",
             required = true,
+            allowMultipleOccurrences = false,
+        )
+        val androidAppEntryPointType = CliOption(
+            optionName = "androidAppEntryPointType",
+            valueDescription = "<Activity|Composable> default: Composable",
+            description = "Defines the entrypoint initialization strategy.",
+            required = false,
             allowMultipleOccurrences = false,
         )
     }

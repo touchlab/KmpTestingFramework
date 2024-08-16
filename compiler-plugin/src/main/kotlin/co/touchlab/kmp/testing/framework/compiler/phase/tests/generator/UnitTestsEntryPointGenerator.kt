@@ -49,7 +49,11 @@ class UnitTestsEntryPointGenerator(
         
                 val contracts = suite.${contracts.contractsClassName}()
         
-                contracts.action()
+                try {
+                    contracts.action()
+                } finally {
+                    ${if(driver.hasOnFinally) "driver.onFinally()" else ""}
+                }
             }
             """.trimIndent()
     }

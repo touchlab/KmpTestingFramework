@@ -11,6 +11,7 @@ object PluginConfigurationKeys {
     object UnitTestsGeneratorOutputPath : CompilerConfigurationKey<Path>("UnitTestsGeneratorOutputPath")
 
     object AndroidAppEntryPoint : CompilerConfigurationKey<String>("AndroidAppEntryPoint")
+    object AndroidAppEntryPointType : CompilerConfigurationKey<AndroidInitializationStrategy>("AndroidAppEntryPointType")
 }
 
 var CompilerConfiguration.androidTestsGeneratorOutputPath: Path
@@ -28,3 +29,7 @@ var CompilerConfiguration.unitTestsGeneratorOutputPath: Path
 var CompilerConfiguration.androidAppEntryPoint: String
     get() = getNotNull(PluginConfigurationKeys.AndroidAppEntryPoint)
     set(value) = put(PluginConfigurationKeys.AndroidAppEntryPoint, value)
+
+var CompilerConfiguration.androidAppEntryPointType: AndroidInitializationStrategy
+    get() = get(PluginConfigurationKeys.AndroidAppEntryPointType) ?: AndroidInitializationStrategy.COMPOSABLE
+    set(value) = put(PluginConfigurationKeys.AndroidAppEntryPointType, value)
