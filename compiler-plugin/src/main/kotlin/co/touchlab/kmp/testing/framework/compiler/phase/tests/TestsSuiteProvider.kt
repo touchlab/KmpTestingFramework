@@ -5,10 +5,11 @@ package co.touchlab.kmp.testing.framework.compiler.phase.tests
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.ContractsDescriptor
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.DriverDescriptor
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.TestsSuiteDescriptor
-import co.touchlab.kmp.testing.framework.dsl.ContractsDsl
-import co.touchlab.kmp.testing.framework.dsl.driver.AndroidDriver
-import co.touchlab.kmp.testing.framework.dsl.driver.IOSDriver
-import co.touchlab.kmp.testing.framework.dsl.driver.UnitDriver
+import co.touchlab.kmp.testing.framework.compiler.util.FrameworkClasses
+import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyClass
+import org.jetbrains.kotlin.fir.types.classId
+import org.jetbrains.kotlin.fir.types.resolvedType
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
@@ -17,13 +18,15 @@ import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
 import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.types.classOrNull
+import org.jetbrains.kotlin.ir.types.isClassWithFqName
 import org.jetbrains.kotlin.ir.util.dumpKotlinLike
+import org.jetbrains.kotlin.ir.util.getAllSuperclasses
 import org.jetbrains.kotlin.ir.util.isSubclassOf
 import org.jetbrains.kotlin.ir.util.superClass
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
-import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.ClassId
 
 class TestsSuiteProvider {
 
@@ -63,12 +66,6 @@ class TestsSuiteProvider {
 
     private class Visitor : IrElementVisitorVoid {
 
-        private val contractsDslFqName = FqName(ContractsDsl::class.qualifiedName!!)
-
-        private val androidDriverAnnotationFqName = FqName(AndroidDriver::class.qualifiedName!!)
-        private val iOSDriverAnnotationFqName = FqName(IOSDriver::class.qualifiedName!!)
-        private val unitDriverAnnotationFqName = FqName(UnitDriver::class.qualifiedName!!)
-
         val discoveredContracts: MutableList<IrClass> = mutableListOf()
 
         val discoveredAndroidDrivers: MutableList<IrClass> = mutableListOf()
@@ -103,18 +100,27 @@ class TestsSuiteProvider {
         }
 
         private fun IrClass.isContract(): Boolean =
-            this.superTypes.any { it.classFqName == contractsDslFqName }
+            this.isInstantiable() && this.getAllSuperclasses().any { it.isClassWithFqName(FrameworkClasses.contractsDslFqName) }
 
         private fun IrClass.isAndroidDriver(): Boolean =
-            this.hasAnnotation(androidDriverAnnotationFqName)
+            this.isInstantiable() && hasThisOrSuperTypeAnnotation(FrameworkClasses.androidDriverTypeAnnotationClassId)
 
         private fun IrClass.isIOSDriver(): Boolean =
-            this.hasAnnotation(iOSDriverAnnotationFqName)
+            this.isInstantiable() && hasThisOrSuperTypeAnnotation(FrameworkClasses.iOSDriverTypeAnnotationClassId)
 
         private fun IrClass.isUnitDriver(): Boolean =
-            this.hasAnnotation(unitDriverAnnotationFqName)
+            this.isInstantiable() && hasThisOrSuperTypeAnnotation(FrameworkClasses.unitDriverTypeAnnotationClassId)
 
-        private fun IrClass.hasAnnotation(fqName: FqName): Boolean =
-            this.annotations.any { it.type.classFqName == fqName }
+        private fun IrClass.isInstantiable(): Boolean =
+            this.modality !in setOf(Modality.ABSTRACT, Modality.SEALED)
+
+        private fun IrClass.hasThisOrSuperTypeAnnotation(classId: ClassId): Boolean =
+            this.hasAnnotation(classId) || this.getAllSuperclasses().any { it.hasAnnotation(classId) }
+
+        private fun IrClass.hasAnnotation(classId: ClassId): Boolean =
+            when (this) {
+                is Fir2IrLazyClass -> this.fir.annotations.any { it.resolvedType.classId == classId }
+                else -> this.annotations.any { it.type.classFqName == classId.asSingleFqName() }
+            }
     }
 }

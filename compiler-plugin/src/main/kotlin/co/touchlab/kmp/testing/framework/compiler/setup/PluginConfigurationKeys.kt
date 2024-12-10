@@ -1,5 +1,6 @@
 package co.touchlab.kmp.testing.framework.compiler.setup
 
+import co.touchlab.kmp.testing.framework.compiler.setup.config.AndroidInitializationStrategy
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.CompilerConfigurationKey
 import java.nio.file.Path
@@ -12,6 +13,10 @@ object PluginConfigurationKeys {
 
     object AndroidAppEntryPoint : CompilerConfigurationKey<String>("AndroidAppEntryPoint")
     object AndroidAppEntryPointType : CompilerConfigurationKey<AndroidInitializationStrategy>("AndroidAppEntryPointType")
+
+    object AndroidContextFactory : CompilerConfigurationKey<String?>("AndroidContextFactory")
+    object IOSContextFactory : CompilerConfigurationKey<String?>("iOSContextFactory")
+    object UnitContextFactory : CompilerConfigurationKey<String?>("UnitContextFactory")
 }
 
 var CompilerConfiguration.androidTestsGeneratorOutputPath: Path
@@ -31,5 +36,17 @@ var CompilerConfiguration.androidAppEntryPoint: String
     set(value) = put(PluginConfigurationKeys.AndroidAppEntryPoint, value)
 
 var CompilerConfiguration.androidAppEntryPointType: AndroidInitializationStrategy
-    get() = get(PluginConfigurationKeys.AndroidAppEntryPointType) ?: AndroidInitializationStrategy.COMPOSABLE
+    get() = get(PluginConfigurationKeys.AndroidAppEntryPointType) ?: AndroidInitializationStrategy.Composable
     set(value) = put(PluginConfigurationKeys.AndroidAppEntryPointType, value)
+
+var CompilerConfiguration.androidContextFactory: String?
+    get() = get(PluginConfigurationKeys.AndroidContextFactory)
+    set(value) = putIfNotNull(PluginConfigurationKeys.AndroidContextFactory, value)
+
+var CompilerConfiguration.iOSContextFactory: String?
+    get() = get(PluginConfigurationKeys.IOSContextFactory)
+    set(value) = putIfNotNull(PluginConfigurationKeys.IOSContextFactory, value)
+
+var CompilerConfiguration.unitContextFactory: String?
+    get() = get(PluginConfigurationKeys.UnitContextFactory)
+    set(value) = putIfNotNull(PluginConfigurationKeys.UnitContextFactory, value)

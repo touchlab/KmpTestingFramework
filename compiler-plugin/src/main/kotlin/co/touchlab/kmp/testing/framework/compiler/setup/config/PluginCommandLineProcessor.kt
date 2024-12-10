@@ -1,5 +1,13 @@
-package co.touchlab.kmp.testing.framework.compiler.setup
+package co.touchlab.kmp.testing.framework.compiler.setup.config
 
+import co.touchlab.kmp.testing.framework.compiler.setup.androidAppEntryPoint
+import co.touchlab.kmp.testing.framework.compiler.setup.androidAppEntryPointType
+import co.touchlab.kmp.testing.framework.compiler.setup.androidContextFactory
+import co.touchlab.kmp.testing.framework.compiler.setup.androidTestsGeneratorOutputPath
+import co.touchlab.kmp.testing.framework.compiler.setup.iOSContextFactory
+import co.touchlab.kmp.testing.framework.compiler.setup.iOSTestsGeneratorOutputPath
+import co.touchlab.kmp.testing.framework.compiler.setup.unitContextFactory
+import co.touchlab.kmp.testing.framework.compiler.setup.unitTestsGeneratorOutputPath
 import org.jetbrains.kotlin.compiler.plugin.AbstractCliOption
 import org.jetbrains.kotlin.compiler.plugin.CliOption
 import org.jetbrains.kotlin.compiler.plugin.CommandLineProcessor
@@ -17,6 +25,9 @@ class PluginCommandLineProcessor : CommandLineProcessor {
         Options.iOSTestsGeneratorOutputPath,
         Options.unitTestsGeneratorOutputPath,
         Options.androidAppEntryPoint,
+        Options.androidContextFactory,
+        Options.iOSContextFactory,
+        Options.unitContextFactory,
         Options.androidAppEntryPointType,
     )
 
@@ -28,7 +39,12 @@ class PluginCommandLineProcessor : CommandLineProcessor {
             Options.iOSTestsGeneratorOutputPath.optionName -> configuration.iOSTestsGeneratorOutputPath = Paths.get(value)
             Options.unitTestsGeneratorOutputPath.optionName -> configuration.unitTestsGeneratorOutputPath = Paths.get(value)
             Options.androidAppEntryPoint.optionName -> configuration.androidAppEntryPoint = value
-            Options.androidAppEntryPointType.optionName -> configuration.androidAppEntryPointType = AndroidInitializationStrategy.byName(value)
+            Options.androidAppEntryPointType.optionName -> {
+                configuration.androidAppEntryPointType = AndroidInitializationStrategy.byName(value)
+            }
+            Options.androidContextFactory.optionName -> configuration.androidContextFactory = value
+            Options.iOSContextFactory.optionName -> configuration.iOSContextFactory = value
+            Options.unitContextFactory.optionName -> configuration.unitContextFactory = value
         }
     }
 
@@ -65,10 +81,35 @@ class PluginCommandLineProcessor : CommandLineProcessor {
             required = true,
             allowMultipleOccurrences = false,
         )
+
         val androidAppEntryPointType = CliOption(
             optionName = "androidAppEntryPointType",
             valueDescription = "<Activity|Composable> default: Composable",
             description = "Defines the entrypoint initialization strategy.",
+            required = false,
+            allowMultipleOccurrences = false,
+        )
+
+        val androidContextFactory = CliOption(
+            optionName = "androidTestsContextFactory",
+            valueDescription = "function FQ name",
+            description = "FQ name of a factory function for AndroidTestContext.",
+            required = false,
+            allowMultipleOccurrences = false,
+        )
+
+        val iOSContextFactory = CliOption(
+            optionName = "iOSTestsContextFactory",
+            valueDescription = "function FQ name",
+            description = "FQ name of a factory function for IOSTestContext.",
+            required = false,
+            allowMultipleOccurrences = false,
+        )
+
+        val unitContextFactory = CliOption(
+            optionName = "unitTestsContextFactory",
+            valueDescription = "function FQ name",
+            description = "FQ name of a factory function for UnitTestContext.",
             required = false,
             allowMultipleOccurrences = false,
         )

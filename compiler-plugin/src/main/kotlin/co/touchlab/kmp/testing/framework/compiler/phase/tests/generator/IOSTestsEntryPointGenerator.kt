@@ -5,11 +5,13 @@ import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.DriverD
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.TestsSuiteDescriptor
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.TestsSuiteInstanceDescriptor
 import co.touchlab.kmp.testing.framework.compiler.util.SmartStringBuilder
+import co.touchlab.kmp.testing.framework.compiler.util.getFunctionNameWithoutPackage
 import co.touchlab.kmp.testing.framework.compiler.util.toValidSwiftIdentifier
 import java.nio.file.Path
 
 class IOSTestsEntryPointGenerator(
     outputDirectory: Path,
+    contextFactoryFunction: String?,
 ) : BaseTestsEntryPointGenerator(outputDirectory) {
 
     override val instanceNamePrefix: String = "IOS"
@@ -19,6 +21,8 @@ class IOSTestsEntryPointGenerator(
 
     override val TestsSuiteInstanceDescriptor.generatedFileName: String
         get() = "$name.swift"
+
+    private val contextFactoryFunction = contextFactoryFunction ?: "DefaultIOSTestContext"
 
     context(SmartStringBuilder)
     override fun TestsSuiteInstanceDescriptor.appendClassHeader() {
@@ -33,23 +37,29 @@ class IOSTestsEntryPointGenerator(
 
     context(SmartStringBuilder)
     override fun TestsSuiteInstanceDescriptor.appendHelperMethods() {
-        +"""    
+        +"""
             override func setUpWithError() throws {
                 continueAfterFailure = false
             }
         
             private func runTest(action: (${contracts.contractsClassPartiallyQualifiedName}) throws -> Void) rethrows {
                 let app = XCUIApplication()
+                
+                let context = ${getFunctionNameWithoutPackage(contextFactoryFunction)}(app: app)
                         
-                let driver = ${driver.partiallyQualifiedName}(app: app)
+                let driver = ${driver.partiallyQualifiedName}(context: context)
+                
+                driver.beforeTest()
+                
+                defer {
+                    driver.afterTest()
+                }
                         
                 let suite = ${contracts.suiteName}(driver: driver)
                         
                 let contracts = ${contracts.contractsClassPartiallyQualifiedName}(suite)
                         
                 try action(contracts)
-                
-                ${if(driver.hasOnFinally) "driver.onFinally()" else ""}
                 
                 app.terminate()
             }

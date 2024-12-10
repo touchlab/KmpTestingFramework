@@ -3,6 +3,7 @@
 pluginManagement {
     repositories {
         mavenCentral()
+        google()
         gradlePluginPortal()
     }
 
@@ -18,11 +19,22 @@ rootProject.name = "KmpTestingFramework"
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
+        google()
     }
 }
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
-include("compiler-plugin")
-include("dsl")
-include("xctest")
+include(":compiler-plugin")
+include(":dsl")
+includeNested(":dsl:driver")
+includeNested(":dsl:driver:android")
+includeNested(":dsl:driver:ios")
+includeNested(":dsl:driver:unit")
+include(":xctest")
+
+fun includeNested(path: String) {
+    include(path)
+
+    project(path).name = path.removePrefix(":").replace(":", "-")
+}

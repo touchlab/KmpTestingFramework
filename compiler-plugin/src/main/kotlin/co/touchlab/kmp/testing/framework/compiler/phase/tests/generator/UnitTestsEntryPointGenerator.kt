@@ -7,10 +7,13 @@ import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.TestsSu
 import co.touchlab.kmp.testing.framework.compiler.util.SmartStringBuilder
 import co.touchlab.kmp.testing.framework.compiler.util.escapedKotlinIdentifierIfNeeded
 import co.touchlab.kmp.testing.framework.compiler.util.getFqName
+import co.touchlab.kmp.testing.framework.compiler.util.getFunctionImport
+import co.touchlab.kmp.testing.framework.compiler.util.getFunctionNameWithoutPackage
 import java.nio.file.Path
 
 class UnitTestsEntryPointGenerator(
     outputDirectory: Path,
+    contextFactoryFunction: String?,
 ) : BaseTestsEntryPointGenerator(outputDirectory) {
 
     override val instanceNamePrefix: String = "Unit"
@@ -20,6 +23,8 @@ class UnitTestsEntryPointGenerator(
 
     override val TestsSuiteInstanceDescriptor.generatedFileName: String
         get() = "$name.kt"
+
+    private val contextFactoryFunction = contextFactoryFunction ?: "co.touchlab.kmp.testing.framework.dsl.context.UnitTestContext.Default"
 
     context(SmartStringBuilder)
     override fun TestsSuiteInstanceDescriptor.appendClassHeader() {
@@ -31,6 +36,7 @@ class UnitTestsEntryPointGenerator(
         getRequiredImports(packageName).forEach {
             +"import $it"
         }
+        +"import ${getFunctionImport(contextFactoryFunction)}"
         +"import kotlin.test.Test"
         +""
 
@@ -43,16 +49,20 @@ class UnitTestsEntryPointGenerator(
     override fun TestsSuiteInstanceDescriptor.appendHelperMethods() {
         +"""    
             private inline fun runTest(action: ${contracts.contractsClassPartiallyQualifiedName}.() -> Unit) {
-                val driver = ${driver.partiallyQualifiedName}()
+                val context = ${getFunctionNameWithoutPackage(contextFactoryFunction)}()
             
-                val suite = ${contracts.suiteName}(driver)
-        
-                val contracts = suite.${contracts.contractsClassName}()
-        
+                val driver = ${driver.partiallyQualifiedName}(context)
+
                 try {
+                    driver.beforeTest()
+                
+                    val suite = ${contracts.suiteName}(driver)
+        
+                    val contracts = suite.${contracts.contractsClassName}()
+        
                     contracts.action()
                 } finally {
-                    ${if(driver.hasOnFinally) "driver.onFinally()" else ""}
+                    driver.afterTest()
                 }
             }
             """.trimIndent()

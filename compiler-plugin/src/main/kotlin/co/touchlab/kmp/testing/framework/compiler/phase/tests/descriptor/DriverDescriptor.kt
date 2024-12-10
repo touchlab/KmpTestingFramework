@@ -3,14 +3,12 @@ package co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor
 import co.touchlab.kmp.testing.framework.compiler.util.getRequiredImport
 import co.touchlab.kmp.testing.framework.compiler.util.partiallyQualifiedName
 import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.kotlinFqName
 import org.jetbrains.kotlin.ir.util.packageFqName
 
 data class DriverDescriptor(
     val partiallyQualifiedName: String,
     val packageName: String,
-    val hasOnFinally: Boolean,
 ) {
 
     fun getRequiredImports(fromPackage: String): Set<String> =
@@ -21,7 +19,6 @@ data class DriverDescriptor(
         fun from(driverClass: IrClass): DriverDescriptor = DriverDescriptor(
             partiallyQualifiedName = driverClass.kotlinFqName.partiallyQualifiedName,
             packageName = driverClass.packageFqName?.asString() ?: "",
-            hasOnFinally = driverClass.functions.any { it.name.asString() == "onFinally" }
         )
     }
 }

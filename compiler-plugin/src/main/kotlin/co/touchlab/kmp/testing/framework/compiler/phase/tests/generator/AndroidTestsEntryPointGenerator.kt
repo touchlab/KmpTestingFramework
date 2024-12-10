@@ -4,10 +4,12 @@ import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.Contrac
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.DriverDescriptor
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.TestsSuiteDescriptor
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.TestsSuiteInstanceDescriptor
-import co.touchlab.kmp.testing.framework.compiler.setup.AndroidInitializationStrategy
+import co.touchlab.kmp.testing.framework.compiler.setup.config.AndroidInitializationStrategy
 import co.touchlab.kmp.testing.framework.compiler.util.SmartStringBuilder
 import co.touchlab.kmp.testing.framework.compiler.util.escapedKotlinIdentifierIfNeeded
 import co.touchlab.kmp.testing.framework.compiler.util.getFqName
+import co.touchlab.kmp.testing.framework.compiler.util.getFunctionImport
+import co.touchlab.kmp.testing.framework.compiler.util.getFunctionNameWithoutPackage
 import co.touchlab.kmp.testing.framework.compiler.util.toValidSwiftIdentifier
 import java.nio.file.Path
 
@@ -15,6 +17,7 @@ class AndroidTestsEntryPointGenerator(
     outputDirectory: Path,
     private val androidAppEntryPoint: String,
     private val androidInitializationStrategy: AndroidInitializationStrategy,
+    contextFactoryFunction: String?,
 ) : BaseTestsEntryPointGenerator(outputDirectory) {
 
     override val instanceNamePrefix: String = "Android"
@@ -24,6 +27,9 @@ class AndroidTestsEntryPointGenerator(
 
     override val TestsSuiteInstanceDescriptor.generatedFileName: String
         get() = "$name.kt"
+
+    private val contextFactoryFunction =
+        contextFactoryFunction ?: "co.touchlab.kmp.testing.framework.dsl.context.AndroidTestContext.Default"
 
     context(SmartStringBuilder)
     override fun TestsSuiteInstanceDescriptor.appendClassHeader() {
@@ -36,13 +42,20 @@ class AndroidTestsEntryPointGenerator(
             
         """.trimIndent()
 
-        getRequiredImports(packageName).forEach {
+        +when (androidInitializationStrategy) {
+            AndroidInitializationStrategy.Composable -> "import androidx.compose.ui.test.junit4.createComposeRule"
+            AndroidInitializationStrategy.Activity -> "import androidx.compose.ui.test.junit4.createEmptyComposeRule"
+        }
+
+        +"import $androidAppEntryPoint"
+
+        getRequiredImports(packageName).sorted().forEach {
             +"import $it"
         }
+
+        +"import ${getFunctionImport(contextFactoryFunction)}"
+
         +"""
-            import $androidAppEntryPoint
-            import androidx.compose.ui.test.junit4.createComposeRule
-            import androidx.compose.ui.test.junit4.createEmptyComposeRule
             import org.junit.Rule
             import org.junit.Test
             
@@ -59,19 +72,24 @@ class AndroidTestsEntryPointGenerator(
             @get:Rule
             val composeTestRule = ${buildComposeTestRule()}
 
-            private inline fun runTest(action: ${contracts.contractsClassPartiallyQualifiedName}.() -> Unit) {
-                ${content()}
-                
-                val driver = ${driverInstantiation()}
+            private inline fun runTest(action: ${contracts.contractsClassPartiallyQualifiedName}.() -> Unit) {""".trimIndent()
+
+        +content()
+
+        +"""
             
-                val suite = ${contracts.suiteName}(driver)
-        
-                val contracts = suite.${contracts.contractsClassName}()
-        
+                val driver = ${driver.partiallyQualifiedName}(context)
+            
                 try {
+                    driver.beforeTest()
+                
+                    val suite = ${contracts.suiteName}(driver)
+            
+                    val contracts = suite.${contracts.contractsClassName}()
+                
                     contracts.action()
                 } finally {
-                    ${if(driver.hasOnFinally) "driver.onFinally()" else ""}
+                    driver.afterTest()
                 }
             }
             """.trimIndent()
@@ -102,26 +120,24 @@ class AndroidTestsEntryPointGenerator(
     }
 
     private fun buildComposeTestRule(): String =
-        when(androidInitializationStrategy) {
-            AndroidInitializationStrategy.COMPOSABLE -> "createComposeRule()"
-            AndroidInitializationStrategy.ACTIVITY -> "createEmptyComposeRule()"
-        }
-
-    private fun TestsSuiteInstanceDescriptor.driverInstantiation(): String =
-        when(androidInitializationStrategy) {
-            AndroidInitializationStrategy.COMPOSABLE -> "${driver.partiallyQualifiedName}(composeTestRule)"
-            AndroidInitializationStrategy.ACTIVITY -> "${driver.partiallyQualifiedName}(composeTestRule, ${entryPointSimpleName()}::class.java)"
+        when (androidInitializationStrategy) {
+            AndroidInitializationStrategy.Composable -> "createComposeRule()"
+            AndroidInitializationStrategy.Activity -> "createEmptyComposeRule()"
         }
 
     private fun entryPointSimpleName(): String = androidAppEntryPoint.substringAfterLast(".")
 
     private fun content(): String =
-        when(androidInitializationStrategy) {
-            AndroidInitializationStrategy.COMPOSABLE -> """
-                composeTestRule.setContent {
-                    ${entryPointSimpleName()}()
-                }
-            """.trimIndent()
-            AndroidInitializationStrategy.ACTIVITY -> ""
+        when (androidInitializationStrategy) {
+            AndroidInitializationStrategy.Composable -> """
+            |    composeTestRule.setContent {
+            |        ${entryPointSimpleName()}()
+            |    }
+            |
+            |    val context = ${getFunctionNameWithoutPackage(contextFactoryFunction)}(composeTestRule, null)
+            """.trimMargin()
+            AndroidInitializationStrategy.Activity -> """
+            |    val context = ${getFunctionNameWithoutPackage(contextFactoryFunction)}(composeTestRule, ${entryPointSimpleName()}::class.java)
+            """.trimMargin()
         }
 }

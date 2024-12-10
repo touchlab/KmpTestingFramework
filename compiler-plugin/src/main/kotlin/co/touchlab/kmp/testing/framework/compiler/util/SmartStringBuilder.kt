@@ -37,7 +37,7 @@ class SmartStringBuilder {
     }
 
     override fun toString(): String =
-        storage.toString()
+        storage.lines().joinToString("\n") { it.takeIf { it.isNotBlank() } ?: "" }
 
     companion object {
 

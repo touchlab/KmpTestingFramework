@@ -1,7 +1,8 @@
-package co.touchlab.kmp.testing.framework.compiler.setup
+package co.touchlab.kmp.testing.framework.compiler.setup.config
 
 enum class AndroidInitializationStrategy {
-    COMPOSABLE, ACTIVITY;
+    Composable,
+    Activity;
 
     companion object {
 

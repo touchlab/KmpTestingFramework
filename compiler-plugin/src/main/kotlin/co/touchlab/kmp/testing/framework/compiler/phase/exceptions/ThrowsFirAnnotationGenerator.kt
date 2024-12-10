@@ -1,6 +1,6 @@
 package co.touchlab.kmp.testing.framework.compiler.phase.exceptions
 
-import co.touchlab.kmp.testing.framework.dsl.ContractsDsl
+import co.touchlab.kmp.testing.framework.compiler.util.FrameworkClasses
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirClass
@@ -41,9 +41,7 @@ class ThrowsFirAnnotationGenerator(session: FirSession) : FirStatusTransformerEx
     private val throwableKClassType: ConeClassLikeType = StandardClassIds.KClass
         .constructClassLikeType(arrayOf(session.builtinTypes.throwableType.coneType))
 
-    private val contractsDslClassId = ClassId.topLevel(FqName(ContractsDsl::class.qualifiedName!!))
-
-    private val markerClasses = setOf(contractsDslClassId)
+    private val markerClasses = setOf(FrameworkClasses.contractsDslClassId)
 
     private val inheritsFromMarkerClassesCache = mutableMapOf<FirClassLikeDeclaration, Boolean>()
 

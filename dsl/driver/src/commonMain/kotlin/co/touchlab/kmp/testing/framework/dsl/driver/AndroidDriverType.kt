@@ -1,3 +1,3 @@
 package co.touchlab.kmp.testing.framework.dsl.driver
 
-annotation class AndroidDriver
+annotation class AndroidDriverType
