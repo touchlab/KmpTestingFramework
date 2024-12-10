@@ -1,7 +1,6 @@
 package co.touchlab.kmp.testing.framework.compiler.phase.names
 
 import co.touchlab.kmp.testing.framework.compiler.util.toValidSwiftIdentifier
-import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationStatus
@@ -60,7 +59,7 @@ class EscapedIdentifiersFirAnnotationGenerator(session: FirSession) : FirStatusT
             return null
         }
 
-        return buildNameAnnotation(validSwiftIdentifier, source, objcAnnotationSymbol)
+        return buildNameAnnotation(validSwiftIdentifier, objcAnnotationSymbol)
     }
 
     private fun FirDeclaration.createJvmNameAnnotationIfNeeded(validSwiftIdentifier: String): FirAnnotation? {
@@ -70,20 +69,18 @@ class EscapedIdentifiersFirAnnotationGenerator(session: FirSession) : FirStatusT
             return null
         }
 
-        return buildNameAnnotation(validSwiftIdentifier, source, jvmNameAnnotationSymbol)
+        return buildNameAnnotation(validSwiftIdentifier, jvmNameAnnotationSymbol)
     }
 
     private fun buildNameAnnotation(
         name: String,
-        source: KtSourceElement?,
         annotationSymbol: FirClassLikeSymbol<*>,
     ): FirAnnotation =
         buildAnnotation {
-            this.source = source
             annotationTypeRef = annotationSymbol.constructType(emptyArray(), false).toFirResolvedTypeRef()
             argumentMapping = buildAnnotationArgumentMapping {
                 mapping[Name.identifier("name")] = buildLiteralExpression(
-                    source = source,
+                    source = null,
                     kind = ConstantValueKind.String,
                     value = name,
                     setType = true,

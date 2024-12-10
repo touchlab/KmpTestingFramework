@@ -1,7 +1,6 @@
 package co.touchlab.kmp.testing.framework.compiler.phase.exceptions
 
 import co.touchlab.kmp.testing.framework.dsl.ContractsDsl
-import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirClass
@@ -53,7 +52,7 @@ class ThrowsFirAnnotationGenerator(session: FirSession) : FirStatusTransformerEx
             return status
         }
 
-        val throwsAnnotation = buildThrowsAnnotation(declaration.source)
+        val throwsAnnotation = buildThrowsAnnotation()
 
         val newAnnotations = declaration.annotations + throwsAnnotation
         declaration.replaceAnnotations(newAnnotations)
@@ -61,23 +60,19 @@ class ThrowsFirAnnotationGenerator(session: FirSession) : FirStatusTransformerEx
         return status
     }
 
-    private fun buildThrowsAnnotation(source: KtSourceElement?): FirAnnotation =
+    private fun buildThrowsAnnotation(): FirAnnotation =
         buildAnnotation {
-            this.source = source
             annotationTypeRef = throwsAnnotationTypeRef
             argumentMapping = buildAnnotationArgumentMapping {
                 mapping[Name.identifier("exceptionClasses")] = buildVarargArgumentsExpression {
-                    this.source = source
                     coneElementTypeOrNull = throwableKClassType
                     coneTypeOrNull = throwableKClassType.createArrayType()
                     arguments.add(
                         buildGetClassCall {
-                            this.source = source
                             coneTypeOrNull = throwableKClassType
                             argumentList = buildArgumentList {
                                 arguments.add(
                                     buildClassReferenceExpression {
-                                        this.source = source
                                         coneTypeOrNull = session.builtinTypes.throwableType.type
                                         classTypeRef = session.builtinTypes.throwableType
                                     }
