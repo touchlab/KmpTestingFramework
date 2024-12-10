@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.fir.expressions.builder.buildVarargArgumentsExpressi
 import org.jetbrains.kotlin.fir.extensions.FirStatusTransformerExtension
 import org.jetbrains.kotlin.fir.resolve.firClassLike
 import org.jetbrains.kotlin.fir.resolve.fqName
-import org.jetbrains.kotlin.fir.resolve.toFirRegularClass
+import org.jetbrains.kotlin.fir.resolve.toRegularClassSymbol
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.toFirResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.ConeClassLikeType
@@ -39,7 +39,7 @@ class ThrowsFirAnnotationGenerator(session: FirSession) : FirStatusTransformerEx
     private val throwsAnnotationTypeRef = ClassId.topLevel(throwsAnnotationFqName).constructClassLikeType().toFirResolvedTypeRef()
 
     private val throwableKClassType: ConeClassLikeType = StandardClassIds.KClass
-        .constructClassLikeType(arrayOf(session.builtinTypes.throwableType.type))
+        .constructClassLikeType(arrayOf(session.builtinTypes.throwableType.coneType))
 
     private val contractsDslClassId = ClassId.topLevel(FqName(ContractsDsl::class.qualifiedName!!))
 
@@ -73,7 +73,7 @@ class ThrowsFirAnnotationGenerator(session: FirSession) : FirStatusTransformerEx
                             argumentList = buildArgumentList {
                                 arguments.add(
                                     buildClassReferenceExpression {
-                                        coneTypeOrNull = session.builtinTypes.throwableType.type
+                                        coneTypeOrNull = session.builtinTypes.throwableType.coneType
                                         classTypeRef = session.builtinTypes.throwableType
                                     }
                                 )
@@ -95,7 +95,8 @@ class ThrowsFirAnnotationGenerator(session: FirSession) : FirStatusTransformerEx
         }
 
         return declaration.dispatchReceiverClassLookupTagOrNull()
-            ?.toFirRegularClass(session)
+            ?.toRegularClassSymbol(session)
+            ?.fir
             ?.inheritsFromMarkerClasses()
             ?: false
     }
