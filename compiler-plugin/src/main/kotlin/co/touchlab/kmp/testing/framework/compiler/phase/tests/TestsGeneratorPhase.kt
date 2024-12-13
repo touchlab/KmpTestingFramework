@@ -1,16 +1,11 @@
 package co.touchlab.kmp.testing.framework.compiler.phase.tests
 
-import co.touchlab.kmp.testing.framework.compiler.phase.tests.generator.AndroidTestsEntryPointGenerator
-import co.touchlab.kmp.testing.framework.compiler.phase.tests.generator.IOSTestsEntryPointGenerator
-import co.touchlab.kmp.testing.framework.compiler.phase.tests.generator.UnitTestsEntryPointGenerator
-import co.touchlab.kmp.testing.framework.compiler.setup.androidAppEntryPoint
-import co.touchlab.kmp.testing.framework.compiler.setup.androidAppEntryPointType
-import co.touchlab.kmp.testing.framework.compiler.setup.androidContextFactory
-import co.touchlab.kmp.testing.framework.compiler.setup.androidTestsGeneratorOutputPath
-import co.touchlab.kmp.testing.framework.compiler.setup.iOSContextFactory
-import co.touchlab.kmp.testing.framework.compiler.setup.iOSTestsGeneratorOutputPath
-import co.touchlab.kmp.testing.framework.compiler.setup.unitContextFactory
-import co.touchlab.kmp.testing.framework.compiler.setup.unitTestsGeneratorOutputPath
+import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.TestsSuiteDescriptor
+import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.TestsSuiteInstanceDescriptor
+import co.touchlab.kmp.testing.framework.compiler.phase.tests.generator.JUnit4TestsGenerator
+import co.touchlab.kmp.testing.framework.compiler.phase.tests.generator.JUnit5TestsGenerator
+import co.touchlab.kmp.testing.framework.compiler.phase.tests.generator.XCTestsGenerator
+import co.touchlab.kmp.testing.framework.compiler.setup.frameworkConfiguration
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 
@@ -18,32 +13,32 @@ class TestsGeneratorPhase(
     configuration: CompilerConfiguration,
 ) {
 
-    private val testsSuiteProvider = TestsSuiteProvider()
+    private val testsSuiteProvider = TestsSuiteProvider(configuration.frameworkConfiguration)
 
-    private val generators = listOf(
-        UnitTestsEntryPointGenerator(
-            configuration.unitTestsGeneratorOutputPath,
-            contextFactoryFunction = configuration.unitContextFactory,
-        ),
-        AndroidTestsEntryPointGenerator(
-            outputDirectory = configuration.androidTestsGeneratorOutputPath,
-            androidAppEntryPoint = configuration.androidAppEntryPoint,
-            androidInitializationStrategy = configuration.androidAppEntryPointType,
-            contextFactoryFunction = configuration.androidContextFactory,
-        ),
-        IOSTestsEntryPointGenerator(
-            outputDirectory = configuration.iOSTestsGeneratorOutputPath,
-            contextFactoryFunction = configuration.iOSContextFactory,
-        ),
-    )
+    private val generatorsByKind = listOf(
+        JUnit4TestsGenerator,
+        JUnit5TestsGenerator,
+        XCTestsGenerator,
+    ).associateBy { it.kind }
 
     fun generateTests(irModuleFragment: IrModuleFragment) {
-        val testsSuite = testsSuiteProvider.findAll(irModuleFragment)
-
-        generators.forEach { generator ->
-            testsSuite.forEach {
-                generator.generate(it)
+        testsSuiteProvider.findAll(irModuleFragment)
+            .forEach {
+                generate(it)
             }
+    }
+
+    private fun generate(testsSuiteDescriptor: TestsSuiteDescriptor) {
+        val testsSuiteInstances = testsSuiteDescriptor.drivers.map { driver ->
+            TestsSuiteInstanceDescriptor(
+                contracts = testsSuiteDescriptor.contracts,
+                driver = driver,
+                suiteHasMultipleDrivers = testsSuiteDescriptor.drivers.count { it.testSuiteConfiguration.name == driver.testSuiteConfiguration.name } > 1,
+            )
+        }
+
+        testsSuiteInstances.forEach { testsSuiteInstanceDescriptor ->
+            generatorsByKind[testsSuiteInstanceDescriptor.configuration.kind]?.generate(testsSuiteInstanceDescriptor)
         }
     }
 }

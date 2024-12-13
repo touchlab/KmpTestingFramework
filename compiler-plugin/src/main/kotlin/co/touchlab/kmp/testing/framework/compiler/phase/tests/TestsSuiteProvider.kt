@@ -5,11 +5,9 @@ package co.touchlab.kmp.testing.framework.compiler.phase.tests
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.ContractsDescriptor
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.DriverDescriptor
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.TestsSuiteDescriptor
+import co.touchlab.kmp.testing.framework.compiler.setup.config.FrameworkConfiguration
 import co.touchlab.kmp.testing.framework.compiler.util.FrameworkClasses
 import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyClass
-import org.jetbrains.kotlin.fir.types.classId
-import org.jetbrains.kotlin.fir.types.resolvedType
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
@@ -26,9 +24,11 @@ import org.jetbrains.kotlin.ir.util.superClass
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
-import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.FqName
 
-class TestsSuiteProvider {
+class TestsSuiteProvider(
+    private val frameworkConfiguration: FrameworkConfiguration,
+) {
 
     fun findAll(moduleFragment: IrModuleFragment): List<TestsSuiteDescriptor> {
         val visitor = Visitor()
@@ -40,9 +40,8 @@ class TestsSuiteProvider {
 
             TestsSuiteDescriptor(
                 contracts = ContractsDescriptor.from(contracts),
-                androidDrivers = visitor.discoveredAndroidDrivers.filterImplementations(baseDriver).map { DriverDescriptor.from(it) },
-                iOSDrivers = visitor.discoveredIOSDrivers.filterImplementations(baseDriver).map { DriverDescriptor.from(it) },
-                unitDrivers = visitor.discoveredUnitDrivers.filterImplementations(baseDriver).map { DriverDescriptor.from(it) },
+                drivers = visitor.discoveredDrivers.filterImplementations(baseDriver)
+                    .map { DriverDescriptor.from(it, frameworkConfiguration) },
             )
         }
     }
@@ -68,9 +67,7 @@ class TestsSuiteProvider {
 
         val discoveredContracts: MutableList<IrClass> = mutableListOf()
 
-        val discoveredAndroidDrivers: MutableList<IrClass> = mutableListOf()
-        val discoveredIOSDrivers: MutableList<IrClass> = mutableListOf()
-        val discoveredUnitDrivers: MutableList<IrClass> = mutableListOf()
+        val discoveredDrivers: MutableList<IrClass> = mutableListOf()
 
         override fun visitElement(element: IrElement) {
             element.acceptChildrenVoid(this)
@@ -86,41 +83,24 @@ class TestsSuiteProvider {
                 discoveredContracts.add(declaration)
             }
 
-            if (declaration.isAndroidDriver()) {
-                discoveredAndroidDrivers.add(declaration)
-            }
-
-            if (declaration.isIOSDriver()) {
-                discoveredIOSDrivers.add(declaration)
-            }
-
-            if (declaration.isUnitDriver()) {
-                discoveredUnitDrivers.add(declaration)
+            if (declaration.isDriver()) {
+                discoveredDrivers.add(declaration)
             }
         }
 
         private fun IrClass.isContract(): Boolean =
             this.isInstantiable() && this.getAllSuperclasses().any { it.isClassWithFqName(FrameworkClasses.contractsDslFqName) }
 
-        private fun IrClass.isAndroidDriver(): Boolean =
-            this.isInstantiable() && hasThisOrSuperTypeAnnotation(FrameworkClasses.androidDriverTypeAnnotationClassId)
-
-        private fun IrClass.isIOSDriver(): Boolean =
-            this.isInstantiable() && hasThisOrSuperTypeAnnotation(FrameworkClasses.iOSDriverTypeAnnotationClassId)
-
-        private fun IrClass.isUnitDriver(): Boolean =
-            this.isInstantiable() && hasThisOrSuperTypeAnnotation(FrameworkClasses.unitDriverTypeAnnotationClassId)
+        private fun IrClass.isDriver(): Boolean =
+            this.isInstantiable() && hasThisOrSuperTypeAnnotation(FrameworkClasses.TestDriverForTestSuiteFqName)
 
         private fun IrClass.isInstantiable(): Boolean =
             this.modality !in setOf(Modality.ABSTRACT, Modality.SEALED)
 
-        private fun IrClass.hasThisOrSuperTypeAnnotation(classId: ClassId): Boolean =
-            this.hasAnnotation(classId) || this.getAllSuperclasses().any { it.hasAnnotation(classId) }
+        private fun IrClass.hasThisOrSuperTypeAnnotation(fqName: FqName): Boolean =
+            this.hasAnnotation(fqName) || this.getAllSuperclasses().any { it.hasAnnotation(fqName) }
 
-        private fun IrClass.hasAnnotation(classId: ClassId): Boolean =
-            when (this) {
-                is Fir2IrLazyClass -> this.fir.annotations.any { it.resolvedType.classId == classId }
-                else -> this.annotations.any { it.type.classFqName == classId.asSingleFqName() }
-            }
+        private fun IrClass.hasAnnotation(fqName: FqName): Boolean =
+            this.annotations.any { it.type.classFqName == fqName }
     }
 }

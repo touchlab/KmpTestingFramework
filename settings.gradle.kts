@@ -26,11 +26,10 @@ dependencyResolutionManagement {
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 include(":compiler-plugin")
+include(":compiler-plugin-api")
 include(":dsl")
 includeNested(":dsl:driver")
-includeNested(":dsl:driver:android")
-includeNested(":dsl:driver:ios")
-includeNested(":dsl:driver:unit")
+includeNested(":dsl:driver:xc-ui")
 include(":xctest")
 
 fun includeNested(path: String) {
