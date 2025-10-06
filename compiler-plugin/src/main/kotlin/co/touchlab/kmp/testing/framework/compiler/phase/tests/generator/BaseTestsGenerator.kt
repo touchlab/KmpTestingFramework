@@ -32,9 +32,9 @@ abstract class BaseTestsGenerator : TestsGenerator {
         appendClassHeader()
 
         indented {
-            appendAdditionalClassContent()
-
             appendTests()
+
+            appendAdditionalClassContent()
 
             appendHelperMethods()
         }
