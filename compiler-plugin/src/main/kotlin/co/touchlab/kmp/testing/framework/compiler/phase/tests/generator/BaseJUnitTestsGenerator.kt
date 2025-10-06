@@ -48,7 +48,8 @@ abstract class BaseJUnitTestsGenerator : BaseTestsGenerator() {
             """.trimMargin()
         }
 
-        """
+        +"""
+                
                 try {
                     driver.beforeTest()
                 
