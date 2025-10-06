@@ -31,6 +31,7 @@ include(":dsl")
 includeNested(":dsl:driver")
 includeNested(":dsl:driver:xc-ui")
 include(":xctest")
+include(":gradle-plugin")
 
 fun includeNested(path: String) {
     include(path)

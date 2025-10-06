@@ -14,6 +14,9 @@ data class FrameworkConfiguration(
         }
     }
 
+    fun serialize(): String =
+        Json.encodeToString(serializer(), this)
+
     companion object {
 
         fun deserialize(json: String): FrameworkConfiguration = Json.decodeFromString(json)
