@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.1.0"
+kotlin = "2.2.10"
 jdk = "8"
 kotlinx-serialization = "1.7.3"
 buildconfig = "5.4.0"

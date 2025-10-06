@@ -5,6 +5,7 @@ package co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor
 import co.touchlab.kmp.testing.framework.compiler.util.getRequiredImport
 import co.touchlab.kmp.testing.framework.compiler.util.partiallyQualifiedName
 import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.declarations.IrParameterKind
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.declarations.IrValueParameter
@@ -53,7 +54,7 @@ sealed interface ContractDescriptor {
     companion object {
 
         fun from(contractFunction: IrSimpleFunction): ContractDescriptor {
-            val extensionReceiverParameter = contractFunction.extensionReceiverParameter
+            val extensionReceiverParameter = contractFunction.parameters.firstOrNull { it.kind == IrParameterKind.ExtensionReceiver }
 
             return if (extensionReceiverParameter != null) {
                 createParametrizedContract(contractFunction, extensionReceiverParameter)

@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.ir.util.dumpKotlinLike
 import org.jetbrains.kotlin.ir.util.getAllSuperclasses
 import org.jetbrains.kotlin.ir.util.isSubclassOf
 import org.jetbrains.kotlin.ir.util.superClass
-import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
+import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.name.FqName
@@ -63,7 +63,7 @@ class TestsSuiteProvider(
         return driverGetter.returnType.classOrNull?.owner ?: throwContractError()
     }
 
-    private class Visitor : IrElementVisitorVoid {
+    private class Visitor : IrVisitorVoid() {
 
         val discoveredContracts: MutableList<IrClass> = mutableListOf()
 
