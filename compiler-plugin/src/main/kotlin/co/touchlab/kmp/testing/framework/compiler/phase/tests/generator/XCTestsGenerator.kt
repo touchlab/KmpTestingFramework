@@ -47,6 +47,7 @@ object XCTestsGenerator : BaseTestsGenerator() {
         }
 
         +"""
+                
                 defer {
                     driver.afterTest()
                 }
