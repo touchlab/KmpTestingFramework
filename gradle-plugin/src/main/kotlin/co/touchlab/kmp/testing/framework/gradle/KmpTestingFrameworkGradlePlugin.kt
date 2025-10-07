@@ -4,6 +4,8 @@ import co.touchlab.kmp.testing.framework.gradle.extension.KmpTestingFrameworkExt
 import co.touchlab.kmp.testing.framework.gradle.task.CreateKmpTestingFrameworkConfigTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.kotlin.dsl.dependencies
+import org.gradle.kotlin.dsl.exclude
 import org.gradle.kotlin.dsl.register
 
 class KmpTestingFrameworkGradlePlugin : Plugin<Project> {
@@ -15,6 +17,8 @@ class KmpTestingFrameworkGradlePlugin : Plugin<Project> {
             registerCompilerPluginAppliers()
 
             registerCreateKmpTestingFrameworkConfigTask(extension)
+
+            configureNativeCompilerClasspath()
         }
     }
 
@@ -37,5 +41,27 @@ class KmpTestingFrameworkGradlePlugin : Plugin<Project> {
 
             configFile.set(outputFile)
         }
+    }
+
+    private fun Project.configureNativeCompilerClasspath() {
+        val configuration = project.configurations.register(nativeCompilerPluginClasspath) {
+            isCanBeConsumed = false
+            isCanBeResolved = true
+
+            exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-common")
+            exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk8")
+            exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk7")
+            exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
+            exclude(group = "org.jetbrains", module = "annotations")
+        }
+
+        project.dependencies {
+            configuration(KmpTestingFrameworkKotlinCompilerPluginApplier.pluginArtifactCoordinates)
+        }
+    }
+
+    companion object {
+
+        internal val nativeCompilerPluginClasspath = "kmpTestingFrameworkNativeCompilerPluginClasspath"
     }
 }
