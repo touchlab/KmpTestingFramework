@@ -30,8 +30,8 @@ class KmpTestingFrameworkKotlinCompilerPluginApplier : KotlinCompilerPluginSuppo
         }
     }
 
-    override fun getCompilerPluginId(): String = "co.touchlab.kmp.testing.framework"
+    override fun getCompilerPluginId(): String = "co.touchlab.kmp-testing-framework"
 
     override fun getPluginArtifact(): SubpluginArtifact =
-        SubpluginArtifact("co.touchlab.kmp.testing.framework", "compiler-plugin", BuildConfig.VERSION)
+        SubpluginArtifact("co.touchlab.kmp-testing-framework", "compiler-plugin", BuildConfig.VERSION)
 }

@@ -12,7 +12,7 @@ import kotlin.io.path.readText
 @OptIn(ExperimentalCompilerApi::class)
 class PluginCommandLineProcessor : CommandLineProcessor {
 
-    override val pluginId: String = "co.touchlab.kmp.testing.framework"
+    override val pluginId: String = "co.touchlab.kmp-testing-framework"
 
     override val pluginOptions: Collection<AbstractCliOption> = listOf(
         Options.configuration,
