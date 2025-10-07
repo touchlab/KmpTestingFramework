@@ -39,6 +39,12 @@ kotlin {
 
     mingwX64()
 
-    wasmWasi()
-    wasmJs()
+    wasmWasi {
+        nodejs()
+    }
+    wasmJs {
+        browser()
+        nodejs()
+        d8()
+    }
 }
