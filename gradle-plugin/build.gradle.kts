@@ -1,8 +1,14 @@
 plugins {
     id("build.jvm")
     alias(libs.plugins.buildconfig)
+    `maven-publish`
 
     `kotlin-dsl`
+}
+
+java {
+    withSourcesJar()
+    withJavadocJar()
 }
 
 buildConfig {

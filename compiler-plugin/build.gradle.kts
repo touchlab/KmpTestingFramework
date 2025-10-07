@@ -1,5 +1,6 @@
 plugins {
     id("build.jvm")
+    id("build.publish-jvm")
 }
 
 dependencies {

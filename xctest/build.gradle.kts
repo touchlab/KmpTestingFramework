@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.konan.target.KonanTarget
 
 plugins {
     id("build.multiplatform.darwin")
+    id("build.publish-multiplatform")
 }
 
 kotlin {

@@ -34,7 +34,17 @@ include(":xctest")
 include(":gradle-plugin")
 
 fun includeNested(path: String) {
-    include(path)
+    val nestedPath = path
+        .removePrefix(":")
+        .split(":")
+        .fold("" to "") { (path, namePrefix), simpleName ->
+            val moduleName = if (namePrefix.isEmpty()) simpleName else "$namePrefix-$simpleName"
 
-    project(path).name = path.removePrefix(":").replace(":", "-")
+            "$path:$moduleName" to moduleName
+        }
+        .first
+
+    include(nestedPath)
+
+    project(nestedPath).projectDir = path.removePrefix(":").replace(":", File.separator).let(::File)
 }
