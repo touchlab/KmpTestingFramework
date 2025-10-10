@@ -2,6 +2,7 @@ package co.touchlab.kmp.testing.framework.compiler.phase.exceptions
 
 import co.touchlab.kmp.testing.framework.compiler.util.FrameworkClasses
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.analysis.checkers.declaration.isLocalMember
 import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirClass
 import org.jetbrains.kotlin.fir.declarations.FirClassLikeDeclaration
@@ -84,7 +85,7 @@ class ThrowsFirAnnotationGenerator(session: FirSession) : FirStatusTransformerEx
 
     @OptIn(SymbolInternals::class)
     override fun needTransformStatus(declaration: FirDeclaration): Boolean {
-        if (declaration !is FirCallableDeclaration) {
+        if (declaration !is FirCallableDeclaration || declaration.isLocalMember) {
             return false
         }
 

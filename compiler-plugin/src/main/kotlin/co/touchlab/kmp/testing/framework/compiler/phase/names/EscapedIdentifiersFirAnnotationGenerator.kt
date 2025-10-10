@@ -2,6 +2,7 @@ package co.touchlab.kmp.testing.framework.compiler.phase.names
 
 import co.touchlab.kmp.testing.framework.compiler.util.toValidSwiftIdentifier
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.analysis.checkers.declaration.isLocalMember
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationStatus
 import org.jetbrains.kotlin.fir.declarations.FirMemberDeclaration
@@ -89,7 +90,7 @@ class EscapedIdentifiersFirAnnotationGenerator(session: FirSession) : FirStatusT
         }
 
     override fun needTransformStatus(declaration: FirDeclaration): Boolean {
-        if (declaration !is FirMemberDeclaration) {
+        if (declaration !is FirMemberDeclaration || declaration.isLocalMember) {
             return false
         }
 
