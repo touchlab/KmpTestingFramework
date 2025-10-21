@@ -18,11 +18,14 @@ import org.jetbrains.kotlin.ir.util.packageFqName
 
 sealed interface ContractDescriptor {
 
+    val function: IrSimpleFunction
+
     val contractFunctionName: String
 
     fun getRequiredImports(fromPackage: String): Set<String>
 
     data class Simple(
+        override val function: IrSimpleFunction,
         override val contractFunctionName: String,
         val testName: String,
     ) : ContractDescriptor {
@@ -31,6 +34,7 @@ sealed interface ContractDescriptor {
     }
 
     data class Parametrized(
+        override val function: IrSimpleFunction,
         override val contractFunctionName: String,
         val dataProvider: DataProvider,
     ) : ContractDescriptor {
@@ -65,6 +69,7 @@ sealed interface ContractDescriptor {
 
         private fun createSimpleContract(contractFunction: IrSimpleFunction): Simple =
             Simple(
+                function = contractFunction,
                 testName = contractFunction.name.identifier,
                 contractFunctionName = contractFunction.name.identifier,
             )
@@ -76,6 +81,7 @@ sealed interface ContractDescriptor {
             val dataProvider = createDataProvider(contractFunction, extensionReceiverParameter)
 
             return Parametrized(
+                function = contractFunction,
                 contractFunctionName = contractFunction.name.identifier,
                 dataProvider = dataProvider,
             )

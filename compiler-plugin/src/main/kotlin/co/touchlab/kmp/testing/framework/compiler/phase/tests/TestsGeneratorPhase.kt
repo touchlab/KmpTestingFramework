@@ -5,15 +5,8 @@ import co.touchlab.kmp.testing.framework.compiler.phase.tests.descriptor.TestsSu
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.generator.JUnit4TestsGenerator
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.generator.JUnit5TestsGenerator
 import co.touchlab.kmp.testing.framework.compiler.phase.tests.generator.XCTestsGenerator
-import co.touchlab.kmp.testing.framework.compiler.setup.frameworkConfiguration
-import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 
-class TestsGeneratorPhase(
-    configuration: CompilerConfiguration,
-) {
-
-    private val testsSuiteProvider = TestsSuiteProvider(configuration.frameworkConfiguration)
+object TestsGeneratorPhase {
 
     private val generatorsByKind = listOf(
         JUnit4TestsGenerator,
@@ -21,11 +14,10 @@ class TestsGeneratorPhase(
         XCTestsGenerator,
     ).associateBy { it.kind }
 
-    fun generateTests(irModuleFragment: IrModuleFragment) {
-        testsSuiteProvider.findAll(irModuleFragment)
-            .forEach {
-                generate(it)
-            }
+    fun generateTests(tests: List<TestsSuiteDescriptor>) {
+        tests.forEach {
+            generate(it)
+        }
     }
 
     private fun generate(testsSuiteDescriptor: TestsSuiteDescriptor) {

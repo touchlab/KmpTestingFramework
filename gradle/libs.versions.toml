@@ -4,6 +4,7 @@ jvmTarget = "17"
 jvmToolchain = "21"
 kotlinx-serialization = "1.9.0"
 buildconfig = "5.4.0"
+coroutines = "1.10.2"
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
@@ -17,3 +18,4 @@ plugin-kotlin-gradle = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", v
 kotlin-compiler-embeddable = { module = "org.jetbrains.kotlin:kotlin-compiler-embeddable", version.ref = "kotlin" }
 
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }

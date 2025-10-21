@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.expressions.IrExpression
+import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
 import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.types.classOrNull
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.ir.types.isClassWithFqName
 import org.jetbrains.kotlin.ir.util.dumpKotlinLike
 import org.jetbrains.kotlin.ir.util.getAllSuperclasses
 import org.jetbrains.kotlin.ir.util.isSubclassOf
+import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.util.superClass
 import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
@@ -36,12 +38,15 @@ class TestsSuiteProvider(
         moduleFragment.acceptVoid(visitor)
 
         return visitor.discoveredContracts.map { contracts ->
-            val baseDriver = contracts.getBaseDriver()
+            val testsSuiteClass = contracts.parentAsClass
+
+            val (baseDriver, driverGetter) = contracts.getBaseDriverAndGetter(testsSuiteClass)
 
             TestsSuiteDescriptor(
-                contracts = ContractsDescriptor.from(contracts),
+                contracts = ContractsDescriptor.from(contracts, driverGetter),
                 drivers = visitor.discoveredDrivers.filterImplementations(baseDriver)
                     .map { DriverDescriptor.from(it, frameworkConfiguration) },
+                testsSuiteClass = testsSuiteClass,
             )
         }
     }
@@ -49,19 +54,18 @@ class TestsSuiteProvider(
     private fun List<IrClass>.filterImplementations(baseDriver: IrClass): List<IrClass> =
         this.filter { it.isSubclassOf(baseDriver) }
 
-    private fun IrClass.getBaseDriver(): IrClass {
-        fun throwContractError(): Nothing =
-            error("Contracts class must be an inner class inside a class that inherits from a DSL which contains a driver property. Was: ${this.dumpKotlinLike()}")
-
-        val superClass = (parent as IrClass).superClass ?: throwContractError()
-
-        val driverGetter = superClass.declarations
+    private fun IrClass.getBaseDriverAndGetter(testsSuiteClass: IrClass): Pair<IrClass, IrSimpleFunctionSymbol> {
+        val driverGetter = (testsSuiteClass.superClass ?: throwContractError())
+            .declarations
             .filterIsInstance<IrProperty>()
             .singleOrNull { it.name.identifier == "driver" }
             ?.getter ?: throwContractError()
 
-        return driverGetter.returnType.classOrNull?.owner ?: throwContractError()
+        return (driverGetter.returnType.classOrNull?.owner ?: throwContractError()) to driverGetter.symbol
     }
+
+    private fun IrClass.throwContractError(): Nothing =
+        error("Contracts class must be an inner class inside a class that inherits from a DSL which contains a driver property. Was: ${this.dumpKotlinLike()}")
 
     private class Visitor : IrVisitorVoid() {
 
